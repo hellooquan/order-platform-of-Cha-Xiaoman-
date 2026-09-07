@@ -19,6 +19,9 @@
 #include <sys/stat.h>
 #include <stdint.h>
 #include <fcntl.h>
+#include <time.h>
+#include <stdbool.h>
 #include "cJSON.h"
+
 
 #endif

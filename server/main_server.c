@@ -2,7 +2,8 @@
 #include "linklist.h"
 #include "myfunction.h"
 
-int sockfd;
+static int sockfd;
+unsigned int client_id = 1; // 客户端id
 
 // 线程函数，接收客户端数据
 void *recvfunction(void *arg)

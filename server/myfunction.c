@@ -1,11 +1,14 @@
 #include "myfunction.h"
 
+extern unsigned int client_id;
+
 cJSON *strtojson(char *str)
 {
     cJSON *obj = cJSON_CreateObject();
     char *token;
     char *key;
-    token = strtok(str, "\n:"); // 分割字符串
+    cJSON_AddNumberToObject(obj, "client_id", client_id++);
+    token = strtok(str, "\n:");           // 分割字符串
     if (token == NULL)
         return NULL;                                // 如果字符串为空，返回NULL
     key = strtok(NULL, "\n:");                      // 获取键
