@@ -36,7 +36,7 @@ int main(int argc, char **argv)
 
     /*Initialize the display, and the input devices*/
     hal_init(1024, 600);
-
+    
     /*Initialize the client*/
     client_init("127.0.0.1", 50021);
     /*receive*/

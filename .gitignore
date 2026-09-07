@@ -4,3 +4,6 @@ client/bin/
 client/lvgl/
 server/server
 server/order_list.txt
+merchant/build
+merchant/build
+merchant/lvgl
