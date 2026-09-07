@@ -41,7 +41,7 @@ void *recvfunction(void *arg)
     {
         bzero(recvbuf, sizeof(recvbuf));
         // recv接受客户端数据
-        int ret = recv(connfd, recvbuf, sizeof(recvbuf), 0);
+        int ret = recv(connfd, recvbuf, sizeof(recvbuf) - 1, 0);
         if (ret < 0)
         {
             perror("recv error");
@@ -49,6 +49,7 @@ void *recvfunction(void *arg)
         }
         if (ret == 0)
             break;
+        recvbuf[ret] = '\0';
 
         // 将接收到的数据转换为json格式
         cJSON *json = strtojson(recvbuf);
@@ -59,7 +60,8 @@ void *recvfunction(void *arg)
             printf("客户点餐:\n%s\n", json_str);
             free(json_str);
             cJSON_Delete(json);
-            send(connfd, "点餐成功", strlen("点餐成功"), 0);
+            if (send(connfd, "点餐成功", strlen("点餐成功"), 0) < 0)
+                perror("send failed");
         }
     }
 
@@ -95,8 +97,12 @@ int main(int argc, char const *argv[])
     {
         // 等待连接
         int connfd = accept(sockfd, NULL, NULL);
+
+        // link_count 与链表是共享状态,和断开线程(release)互斥
+        pthread_mutex_lock(&link_mutex);
         link_count++;
         printf("有一个新的客户端连接，当前连接服务器的用户数为：%d\n", link_count);
+        pthread_mutex_unlock(&link_mutex);
 
         // 客户端连接后创建线程
         pthread_t tid;

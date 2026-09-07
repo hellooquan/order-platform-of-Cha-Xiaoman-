@@ -5,6 +5,7 @@
 
 extern struct node *link_head;
 extern int link_count;
+extern pthread_mutex_t link_mutex; 
 
 struct node
 {
