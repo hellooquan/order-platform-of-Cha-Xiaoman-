@@ -69,6 +69,7 @@ static int       s_price[ITEM_NUM];                /* 当前价格(元) */
 static lv_obj_t *s_price_lbls[ITEM_NUM];           /* 每行价格 label */
 static lv_obj_t *s_msg_lbl = NULL;                 /* 左下状态提示 */
 static lv_obj_t *s_ord_lbl = NULL;                 /* 订单文本 label */
+static lv_obj_t *s_ord_sc = NULL;                  /* 订单滚动容器 */
 static long      s_ord_size = -1;                  /* 上次读到的大小 */
 
 /* ---------- 中文字体 ---------- */
@@ -305,6 +306,12 @@ static void orders_load(int force)
         snprintf(text, got + 128, "order_list.txt · %ld bytes (tail)\n--------------\n%s",
                  len, buf);
     lv_label_set_text(s_ord_lbl, text);
+    /* 新订单/手动刷新后,自动滚到底部,方便直接看到最新一单 */
+    if (s_ord_sc)
+    {
+        lv_obj_update_layout(s_ord_sc);
+        lv_obj_scroll_to_y(s_ord_sc, LV_COORD_MAX, LV_ANIM_OFF);
+    }
     free(text);
     free(buf);
 }
@@ -570,6 +577,7 @@ void ui_admin_create(void)
     lv_obj_add_flag(sc, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_add_flag(sc, LV_OBJ_FLAG_SCROLL_ELASTIC);
     lv_obj_add_flag(sc, LV_OBJ_FLAG_SCROLL_MOMENTUM);
+    s_ord_sc = sc;
 
     s_ord_lbl = lv_label_create(sc);
     lv_label_set_long_mode(s_ord_lbl, LV_LABEL_LONG_WRAP);
