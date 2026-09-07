@@ -28,10 +28,10 @@
 /* ======================== 可配置项 ======================== */
 
 #ifndef ADMIN_PRC_PATH
-#define ADMIN_PRC_PATH "/home/hyq/project/order_platrorm/client/server/milktea_prices.txt"
+#define ADMIN_PRC_PATH "/home/hyq/project/order_platrorm/server/milktea_prices.txt"
 #endif
 #ifndef ADMIN_ORD_PATH
-#define ADMIN_ORD_PATH "/home/hyq/project/order_platrorm/client/server/order_list.txt"
+#define ADMIN_ORD_PATH "/home/hyq/project/order_platrorm/server/order_list.txt"
 #endif
 
 /* 订单预览最多读文件尾部多少字节 */
