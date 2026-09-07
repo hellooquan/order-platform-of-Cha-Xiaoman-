@@ -3,7 +3,7 @@
 
 #include "myhead.h"
 
-#define FILENAME "order_list.txt" // 点餐列表文件名
+#define FILENAME "/home/hyq/project/order_platrorm/client/server/order_list.txt" // 点餐列表文件名
 
 cJSON *strtojson(char *str);
 int open_list(char *filename);

@@ -1,9 +1,6 @@
-client/build/
-client/bin/
+build/
+bin/
 *.o
-client/lvgl/
-server/server
+lvgl/
 server/order_list.txt
-merchant/build
-merchant/build
-merchant/lvgl
+server/milktea_prices.txt

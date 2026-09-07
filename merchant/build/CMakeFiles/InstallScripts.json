@@ -1,8 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"/home/hyq/project/order_platrorm/merchant/build/cmake_install.cmake",
-		"/home/hyq/project/order_platrorm/merchant/build/lvgl/cmake_install.cmake"
-	],
-	"Parallel" : false
-}
