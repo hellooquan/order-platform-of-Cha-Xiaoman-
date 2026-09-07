@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include "client/client.h"
 
 #if LV_USE_TINY_TTF
@@ -47,6 +48,11 @@
 /* Noto CJK 字体路径(运行环境内优先找第 1 个,找不到试第 2 个) */
 #define UI_MLK_FONT_P1 "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
 #define UI_MLK_FONT_P2 "/usr/share/fonts/opentype/noto/NotoSerifCJK-Regular.ttc"
+
+/* 价格文件:后台管理端(ui_admin)保存的价格,点餐机读它同步价格 */
+#ifndef UI_MLK_PRC_PATH
+#define UI_MLK_PRC_PATH "/home/hyq/project/order_platrorm/server/milktea_prices.txt"
+#endif
 
 /* ======================== 配色(温暖奶茶色系) ======================== */
 #define C_BG1 0xFDF3E3      /* 页面背景(奶油白,顶) */
@@ -98,6 +104,9 @@ static lv_obj_t *s_badges[UI_MLK_PRODUCT_NUM];  /* 每杯的数量角标 label *
 static int32_t s_counts[UI_MLK_PRODUCT_NUM];    /* 每杯已点数量         */
 static lv_obj_t *s_summary_lbl = NULL;          /* 底部汇总条 label     */
 static lv_obj_t *s_minus_lbls[UI_MLK_PRODUCT_NUM]; /* 每张卡“−”文字,0 杯时置灰 */
+static int s_price_cny[UI_MLK_PRODUCT_NUM];      /* 当前生效价格(元),随后台同步 */
+static lv_obj_t *s_price_lbls[UI_MLK_PRODUCT_NUM]; /* 每张卡价格 label */
+static long s_price_file_size = -1;              /* 上次读到的价格文件大小 */
 
 /* ---------- 中文字体(TinyTTF 运行时加载) ---------- */
 static int s_zh_ok = 0;
@@ -294,7 +303,7 @@ static void calc_order(int32_t *cups_out, uint32_t *total_out)
     for (i = 0; i < UI_MLK_PRODUCT_NUM; i++)
     {
         cups += s_counts[i];
-        total += (uint32_t)(s_counts[i] * PRODS[i].price);
+        total += (uint32_t)(s_counts[i] * s_price_cny[i]); /* 用当前价格算 */
     }
     *cups_out = cups;
     *total_out = total;
@@ -315,6 +324,81 @@ static void update_summary(void)
         snprintf(tmp, sizeof(tmp), "CUPS %d   |   TOTAL %u",
                  (int)cups, (unsigned)total);
     lv_label_set_text(s_summary_lbl, tmp);
+}
+
+/* ============ 价格同步:读后台 milktea_prices.txt ============ */
+
+/* 回到代码里写死的默认价(PRODS 表) */
+static void price_defaults(void)
+{
+    int i;
+    for (i = 0; i < UI_MLK_PRODUCT_NUM; i++)
+    {
+        s_price_cny[i] = PRODS[i].price;
+    }
+}
+
+/* 读取价格文件,能打开并解析到至少一项就返回 1 */
+static int price_file_read(void)
+{
+    FILE *fp = fopen(UI_MLK_PRC_PATH, "r");
+    if (!fp)
+        return 0;
+    char line[128];
+    while (fgets(line, sizeof(line), fp))
+    {
+        char *eq = strchr(line, '=');
+        if (!eq)
+            continue;
+        *eq = '\0';
+        int v = atoi(eq + 1);
+        if (v < 1)
+            v = 1;
+        if (v > 99)
+            v = 99;
+        int i;
+        for (i = 0; i < UI_MLK_PRODUCT_NUM; i++)
+        {
+            if (strcmp(line, PRODS[i].name) == 0)
+            {
+                s_price_cny[i] = v;
+                break;
+            }
+        }
+    }
+    fclose(fp);
+    return 1;
+}
+
+/* 用当前价格刷新所有卡片价格显示 + 底部合计 */
+static void price_apply_ui(void)
+{
+    int i;
+    for (i = 0; i < UI_MLK_PRODUCT_NUM; i++)
+    {
+        if (s_price_lbls[i])
+        {
+            char t[16];
+            snprintf(t, sizeof(t), s_zh_ok ? "¥%d" : "%d", s_price_cny[i]);
+            lv_label_set_text(s_price_lbls[i], t);
+        }
+    }
+    update_summary();
+}
+
+/* 定时检测价格文件:后台改了,点餐机这边自动跟着变 */
+static void price_sync_timer_cb(lv_timer_t *t)
+{
+    (void)t;
+    struct stat st;
+    if (stat(UI_MLK_PRC_PATH, &st) != 0)
+        return;
+    if (st.st_size != s_price_file_size)
+    {
+        s_price_file_size = st.st_size;
+        if (price_file_read())
+            price_apply_ui();
+    }
 }
 
 /* ======================== 点击回调(给你填!) ======================== */
@@ -477,14 +561,14 @@ static void create_drink_card(lv_obj_t *root, int idx)
         lv_obj_set_style_margin_top(note, 8, 0);
     }
 
-    /* ---- 价格 ---- */
+    /* ---- 价格(当前价来自 milktea_prices.txt,后台可改) ---- */
     {
         char pr[16];
         const lv_font_t *pf = s_zh_ok ? s_f28 : &lv_font_montserrat_28;
-        snprintf(pr, sizeof(pr), s_zh_ok ? "¥%u" : "%u",
-                 (unsigned)p->price);
+        snprintf(pr, sizeof(pr), s_zh_ok ? "¥%d" : "%d", s_price_cny[idx]);
         lv_obj_t *price = mk_label(card, pr, pf, accent);
         lv_obj_set_style_margin_top(price, 12, 0);
+        s_price_lbls[idx] = price;
     }
 
     /* ---- 右上角“已点数量”角标(挂在根上避免被卡片布局影响) ---- */
@@ -617,8 +701,20 @@ void ui_milktea_create(void)
                                  lv_color_hex(C_PINK_TX));
     lv_obj_align(promotx, LV_ALIGN_CENTER, 0, 0);
 
-    /* ============ 5 个饮品按钮卡片 ============ */
+    /* ---- 当前价格:先用默认值,再尝试读后台的价格文件 ---- */
     int i;
+    price_defaults();
+    s_price_file_size = -1;
+    {
+        struct stat st;
+        if (stat(UI_MLK_PRC_PATH, &st) == 0)
+        {
+            s_price_file_size = st.st_size;
+            price_file_read();
+        }
+    }
+
+    /* ============ 5 个饮品按钮卡片 ============ */
     for (i = 0; i < UI_MLK_PRODUCT_NUM; i++)
     {
         s_counts[i] = 0;
@@ -681,6 +777,9 @@ void ui_milktea_create(void)
     {
         ui_milktea_set_count((uint8_t)i, 0);
     }
+
+    /* 每 3 秒检测后台价格文件,改了自动刷新卡片价格与合计 */
+    lv_timer_create(price_sync_timer_cb, 3000, NULL);
 }
 
 /* ======================== 公共接口 ======================== */
@@ -720,7 +819,7 @@ uint16_t ui_milktea_price_of(uint8_t idx)
 {
     if (idx >= UI_MLK_PRODUCT_NUM)
         return 0;
-    return PRODS[idx].price;
+    return (uint16_t)s_price_cny[idx];
 }
 
 const char *ui_milktea_name_of(uint8_t idx)

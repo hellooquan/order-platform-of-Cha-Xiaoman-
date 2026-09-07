@@ -49,6 +49,10 @@
 #define A_CARAMEL2  0xDEA45F
 #define A_CARD      0xFFFFFF
 #define A_GREEN_TX  0x3E7C4F
+#define A_SAVE_BG1  0xFFCE3D  /* 保存按钮:金黄(上) */
+#define A_SAVE_BG2  0xF5911B  /* 保存按钮:渐变橙(下) */
+#define A_SAVE_TXT  0x3F2410  /* 保存按钮文字:深咖啡(不用白) */
+#define A_SAVE_EDGE 0xC2410C  /* 保存按钮描边:深橘红 */
 
 /* ======================== 饮品数据 ======================== */
 
@@ -374,7 +378,7 @@ static void create_price_row(lv_obj_t *card, int idx, int y)
     lv_obj_remove_flag(plus, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_align(plus, LV_ALIGN_RIGHT_MID, -12, 0);
     lv_obj_t *pt = mk_label(plus, "+", &lv_font_montserrat_28,
-                            lv_color_hex(0xFFFFFF));
+                            lv_color_hex(0x5A2C08)); /* 深棕,显眼且不是白色 */
     lv_obj_align(pt, LV_ALIGN_CENTER, 0, -1);
     lv_obj_add_event_cb(plus, price_plus_cb, LV_EVENT_CLICKED,
                         (void *)(uintptr_t)idx);
@@ -454,16 +458,7 @@ void ui_admin_create(void)
     lv_obj_set_style_text_letter_space(sub, 1, 0);
     lv_obj_set_pos(sub, 106, 54);
 
-    /* 右上角文件提示 */
-    lv_obj_t *tag = lv_obj_create(root);
-    lv_obj_remove_style_all(tag);
-    lv_obj_set_size(tag, 330, 40);
-    lv_obj_set_style_radius(tag, 20, 0);
-    lv_obj_set_style_bg_color(tag, lv_color_hex(0xFFFFFF), 0);
-    lv_obj_align(tag, LV_ALIGN_TOP_RIGHT, -22, 24);
-    lv_obj_t *tagtx = mk_label(tag, "milktea_prices.txt / order_list.txt",
-                               &lv_font_montserrat_14, lv_color_hex(A_BROWN));
-    lv_obj_align(tagtx, LV_ALIGN_CENTER, 0, 0);
+    /* 右上角文件提示:不显示(按需求去掉) */
 
     /* ============ 左面板:价格设置 ============ */
     lv_obj_t *left = mk_panel(root, 24, 100, 470, 486);
@@ -504,15 +499,18 @@ void ui_admin_create(void)
     lv_obj_set_pos(bs, 470 - 18 - 170, 396);
     lv_obj_set_size(bs, 170, 46);
     lv_obj_set_style_radius(bs, 23, 0);
-    lv_obj_set_style_bg_color(bs, lv_color_hex(A_CARAMEL), 0);
-    lv_obj_set_style_bg_grad_color(bs, lv_color_hex(A_CARAMEL2), 0);
+    lv_obj_set_style_bg_color(bs, lv_color_hex(A_SAVE_BG1), 0);
+    lv_obj_set_style_bg_grad_color(bs, lv_color_hex(A_SAVE_BG2), 0);
     lv_obj_set_style_bg_grad_dir(bs, LV_GRAD_DIR_VER, 0);
+    lv_obj_set_style_border_width(bs, 3, 0);
+    lv_obj_set_style_border_color(bs, lv_color_hex(A_SAVE_EDGE), 0);
+    lv_obj_set_style_border_opa(bs, LV_OPA_COVER, 0);
     lv_obj_set_style_translate_y(bs, 2, LV_STATE_PRESSED);
     lv_obj_add_flag(bs, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_remove_flag(bs, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_t *bstx = mk_label(bs, s_zh_ok ? "保存价格" : "SAVE",
                               s_zh_ok ? s_f20 : &lv_font_montserrat_20,
-                              lv_color_hex(0xFFFFFF));
+                              lv_color_hex(A_SAVE_TXT));
     lv_obj_align(bstx, LV_ALIGN_CENTER, 0, 0);
     lv_obj_add_event_cb(bs, btn_save_cb, LV_EVENT_CLICKED, NULL);
 
@@ -568,6 +566,10 @@ void ui_admin_create(void)
     lv_obj_set_style_pad_all(sc, 12, 0);
     lv_obj_set_scroll_dir(sc, LV_DIR_VER);
     lv_obj_set_scrollbar_mode(sc, LV_SCROLLBAR_MODE_AUTO);
+    /* 明确可滚动:鼠标滚轮 / 按住拖动 都能看全部点单信息 */
+    lv_obj_add_flag(sc, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_flag(sc, LV_OBJ_FLAG_SCROLL_ELASTIC);
+    lv_obj_add_flag(sc, LV_OBJ_FLAG_SCROLL_MOMENTUM);
 
     s_ord_lbl = lv_label_create(sc);
     lv_label_set_long_mode(s_ord_lbl, LV_LABEL_LONG_WRAP);
@@ -575,8 +577,10 @@ void ui_admin_create(void)
     lv_obj_set_style_text_font(s_ord_lbl,
                                s_zh_ok ? s_f16 : &lv_font_montserrat_16, 0);
     lv_obj_set_style_text_color(s_ord_lbl, lv_color_hex(0x55371F), 0);
+    lv_obj_set_style_text_line_space(s_ord_lbl, 2, 0);
     lv_label_set_text(s_ord_lbl, "(loading order_list.txt ...)");
     orders_load(1);
+    lv_obj_update_layout(sc);
 
     /* 每 2 秒检测新订单 */
     lv_timer_create(order_timer_cb, 2000, NULL);

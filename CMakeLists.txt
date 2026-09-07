@@ -30,7 +30,7 @@ add_executable(admin main_admin.c ui_admin.c)
 target_compile_definitions(admin PRIVATE LV_CONF_INCLUDE_SIMPLE)
 target_link_libraries(admin lvgl lvgl::examples lvgl::demos lvgl::thorvg ${SDL2_LIBRARIES} m pthread)
 
-add_executable(client main_client.c client/client.c ui_milktea.c mouse_cursor_icon.c)
+add_executable(client main_client.c client/client.c ui_milktea.c)
 
 target_compile_definitions(client PRIVATE LV_CONF_INCLUDE_SIMPLE)
 target_link_libraries(client lvgl lvgl::examples lvgl::demos lvgl::thorvg ${SDL2_LIBRARIES} m pthread)
