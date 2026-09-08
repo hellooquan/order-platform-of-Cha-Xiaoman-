@@ -23,14 +23,14 @@ add_compile_definitions($<$<BOOL:${LV_USE_FFMPEG}>:LV_USE_FFMPEG=1>)
 add_subdirectory(lvgl)
 target_include_directories(lvgl PUBLIC ${PROJECT_SOURCE_DIR} ${SDL2_INCLUDE_DIRS})
 
-add_executable(server server/main_server.c server/cJSON.c server/linklist.c server/myfunction.c)
+add_executable(server my_server/main_server.c my_server/cJSON.c my_server/my_linklist.c my_server/myfunction.c)
 target_link_libraries(server m pthread)
 
-add_executable(admin main_admin.c ui_admin.c)
+add_executable(admin my_admin/main_admin.c my_admin/ui_admin.c)
 target_compile_definitions(admin PRIVATE LV_CONF_INCLUDE_SIMPLE)
 target_link_libraries(admin lvgl lvgl::examples lvgl::demos lvgl::thorvg ${SDL2_LIBRARIES} m pthread)
 
-add_executable(client main_client.c client/client.c ui_milktea.c)
+add_executable(client my_client/main_client.c my_client/my_client.c my_client/ui_milktea.c)
 
 target_compile_definitions(client PRIVATE LV_CONF_INCLUDE_SIMPLE)
 target_link_libraries(client lvgl lvgl::examples lvgl::demos lvgl::thorvg ${SDL2_LIBRARIES} m pthread)

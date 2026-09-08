@@ -1,6 +1,5 @@
 build/
 bin/
 *.o
-lvgl/
-server/order_list.txt
-server/milktea_prices.txt
+order_list.txt
+milktea_prices.txt
