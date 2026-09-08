@@ -51,7 +51,7 @@
 
 /* 价格文件:后台管理端(ui_admin)保存的价格,点餐机读它同步价格 */
 #ifndef UI_MLK_PRC_PATH
-#define UI_MLK_PRC_PATH "/home/hyq/project/order_platrorm/server/milktea_prices.txt"
+#define UI_MLK_PRC_PATH "/home/hyq/project/order_platrorm/my_server/milktea_prices.txt"
 #endif
 
 /* ======================== 配色(温暖奶茶色系) ======================== */
